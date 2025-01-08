@@ -1,8 +1,13 @@
+
 <script lang="ts">
   // Props
   export let name: string = "John Doe";
   export let title: string = "Full Stack Developer";
   export let description: string = "I create beautiful and functional web experiences";
+  export let speed: number = 0.002;
+  export let gridDensity: number = 30;
+  export let lineColor: string = "rgba(0,0,0,0.3)";
+  export let lineThickness: number = 1;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -18,7 +23,7 @@
     ctx.scale(dpr, dpr);
   }
 
-  function drawTunnel() {
+  function drawTunnelGrid() {
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -27,43 +32,41 @@
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const maxRadius = Math.max(rect.width, rect.height);
-    const gridDensity = 30;
-    const perspectiveScale = 0.15;
+    const perspectiveIntensity = 0.8;
 
-    // Draw perspective grid
+    // Draw expanding circles
     for (let i = 0; i < gridDensity; i++) {
-      const progress = ((time + i * perspectiveScale) % 1);
-      const scale = Math.exp(progress * 2);
+      const progress = ((time + i * 0.1) % 1);
+      const scale = Math.exp(progress * perspectiveIntensity * 3);
       const opacity = Math.max(0, 0.4 * (1 - progress));
+      const radius = scale * 40;
 
-      // Draw concentric squares for grid effect
-      const size = scale * 40;
+      // Draw circle
       ctx.beginPath();
-      ctx.rect(centerX - size, centerY - size, size * 2, size * 2);
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = lineThickness;
       ctx.stroke();
 
-      // Draw diagonal lines
-      for (let j = 0; j < 4; j++) {
-        const angle = (j / 4) * Math.PI * 2 + Math.PI / 4;
-        const x1 = centerX + Math.cos(angle) * size;
-        const y1 = centerY + Math.sin(angle) * size;
-        const x2 = centerX + Math.cos(angle + Math.PI) * size;
-        const y2 = centerY + Math.sin(angle + Math.PI) * size;
-
+      // Draw grid lines
+      const numLines = 16;
+      for (let j = 0; j < numLines; j++) {
+        const angle = (j / numLines) * Math.PI * 2;
+        const x1 = centerX + Math.cos(angle) * radius;
+        const y1 = centerY + Math.sin(angle) * radius;
+        
         ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.7})`;
-        ctx.lineWidth = 1;
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x1, y1);
+        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.5})`;
+        ctx.lineWidth = lineThickness * 0.75;
         ctx.stroke();
       }
     }
 
-    // Draw radial lines with perspective
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
+    // Add connecting lines
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
       const gradient = ctx.createLinearGradient(
         centerX + Math.cos(angle) * 40,
         centerY + Math.sin(angle) * 40,
@@ -71,7 +74,7 @@
         centerY + Math.sin(angle) * maxRadius
       );
       
-      gradient.addColorStop(0, 'rgba(0,0,0,0.4)');
+      gradient.addColorStop(0, lineColor);
       gradient.addColorStop(1, 'rgba(0,0,0,0)');
       
       ctx.beginPath();
@@ -84,12 +87,12 @@
         centerY + Math.sin(angle) * maxRadius
       );
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = lineThickness;
       ctx.stroke();
     }
 
-    time += 0.002;
-    animationFrame = requestAnimationFrame(drawTunnel);
+    time += speed;
+    animationFrame = requestAnimationFrame(drawTunnelGrid);
   }
 
   function handleResize() {
@@ -102,7 +105,7 @@
 
   onMount(() => {
     setupCanvas();
-    drawTunnel();
+    drawTunnelGrid();
     window.addEventListener('resize', handleResize);
   });
 
