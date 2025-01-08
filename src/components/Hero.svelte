@@ -1,92 +1,39 @@
 
 <script lang="ts">
-  // Props
   export let name: string = "John Doe";
   export let title: string = "Full Stack Developer";
   export let description: string = "I create beautiful and functional web experiences";
-  export let speed: number = 0.001;
-  export let gridDensity: number = 80;
-  export let lineColor: string = "rgba(0,0,0,0.3)";
-  export let lineThickness: number = 1;
 
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D;
-  let animationFrame: number;
-  let time = 0;
-
-  function setupCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx = canvas.getContext('2d')!;
-    ctx.scale(dpr, dpr);
-  }
-
-  function drawTunnelGrid() {
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    ctx.clearRect(0, 0, rect.width, rect.height);
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const maxRadius = Math.max(rect.width, rect.height) * 0.8;
-    const baseRadius = 40;
-    const numCircles = 30;
-    const spacing = (maxRadius - baseRadius) / numCircles;
-
-    // Draw center circle
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = lineThickness * 2;
-    ctx.stroke();
-
-    // Draw emanating circles
-    for (let i = 0; i < numCircles; i++) {
-      const progress = ((time + i * (1 / numCircles)) % 1);
-      const radius = baseRadius + (spacing * i) + (spacing * progress);
-      
-      // Calculate opacity based on distance from center
-      const distanceRatio = (radius - baseRadius) / (maxRadius - baseRadius);
-      const opacity = Math.max(0, 0.6 * (1 - Math.pow(distanceRatio, 0.8)));
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
-      ctx.lineWidth = lineThickness * (1 - distanceRatio * 0.3);
-      ctx.stroke();
-    }
-
-    time += speed;
-    animationFrame = requestAnimationFrame(drawTunnelGrid);
-  }
-
-  function handleResize() {
-    if (canvas && ctx) {
-      setupCanvas();
-    }
-  }
+  let heroElement: HTMLElement;
+  let vantaEffect: any;
 
   import { onMount, onDestroy } from 'svelte';
 
   onMount(() => {
-    setupCanvas();
-    drawTunnelGrid();
-    window.addEventListener('resize', handleResize);
+    if (typeof window !== 'undefined' && window.VANTA) {
+      vantaEffect = window.VANTA.RINGS({
+        el: heroElement,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        backgroundColor: 0x202428,
+        color: 0x3498db
+      });
+    }
   });
 
   onDestroy(() => {
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
+    if (vantaEffect) {
+      vantaEffect.destroy();
     }
-    window.removeEventListener('resize', handleResize);
   });
 </script>
 
-<section class="hero">
-  <canvas bind:this={canvas} class="tunnel-animation"></canvas>
+<section class="hero" bind:this={heroElement}>
   <div class="hero-content">
     <h1>{name}</h1>
     <h2>{title}</h2>
