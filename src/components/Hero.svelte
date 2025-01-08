@@ -27,17 +27,43 @@
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const maxRadius = Math.max(rect.width, rect.height);
+    const gridDensity = 30;
+    const perspectiveScale = 0.15;
 
-    // Draw static center circle with soft glow
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Draw perspective grid
+    for (let i = 0; i < gridDensity; i++) {
+      const progress = ((time + i * perspectiveScale) % 1);
+      const scale = Math.exp(progress * 2);
+      const opacity = Math.max(0, 0.4 * (1 - progress));
 
-    // Draw radial lines with fade out effect
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
+      // Draw concentric squares for grid effect
+      const size = scale * 40;
+      ctx.beginPath();
+      ctx.rect(centerX - size, centerY - size, size * 2, size * 2);
+      ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Draw diagonal lines
+      for (let j = 0; j < 4; j++) {
+        const angle = (j / 4) * Math.PI * 2 + Math.PI / 4;
+        const x1 = centerX + Math.cos(angle) * size;
+        const y1 = centerY + Math.sin(angle) * size;
+        const x2 = centerX + Math.cos(angle + Math.PI) * size;
+        const y2 = centerY + Math.sin(angle + Math.PI) * size;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.7})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    // Draw radial lines with perspective
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
       const gradient = ctx.createLinearGradient(
         centerX + Math.cos(angle) * 40,
         centerY + Math.sin(angle) * 40,
@@ -58,27 +84,11 @@
         centerY + Math.sin(angle) * maxRadius
       );
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     }
 
-    // Draw expanding circles with fade out
-    const numCircles = 20;
-    const spacing = 20;
-    
-    for (let i = 0; i < numCircles; i++) {
-      const progress = ((time + i * spacing) % maxRadius) / maxRadius;
-      const radius = 40 + progress * (maxRadius - 40);
-      const opacity = Math.max(0, 0.4 * (1 - progress));
-      
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    time += 0.5;
+    time += 0.002;
     animationFrame = requestAnimationFrame(drawTunnel);
   }
 
