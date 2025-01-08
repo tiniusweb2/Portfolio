@@ -50,22 +50,80 @@
   let currentIndex = 0;
   const projectsPerPage = 3;
 
+  let projectsContainer: HTMLElement;
+  let isAnimating = false;
+  
   $: visibleProjects = projects.slice(
     currentIndex,
     currentIndex + projectsPerPage
   );
 
+  function animateSlide(direction: 'next' | 'prev') {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    const cards = projectsContainer.querySelectorAll('.project-item');
+    const xOffset = direction === 'next' ? -100 : 100;
+    
+    gsap.to(cards, {
+      x: `${-xOffset}%`,
+      opacity: 0,
+      scale: 0.8,
+      duration: 0.4,
+      ease: "power3.in",
+      stagger: 0.15,
+      onComplete: () => {
+        // Update index
+        if (direction === 'next') {
+          currentIndex = (currentIndex + projectsPerPage) % projects.length;
+        } else {
+          currentIndex = (currentIndex - projectsPerPage + projects.length) % projects.length;
+        }
+        
+        // Reset position for new cards
+        gsap.set(cards, { x: `${xOffset}%`, opacity: 0, scale: 0.8 });
+        
+        // Animate new cards in
+        gsap.to(cards, {
+          x: "0%",
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          ease: "power3.out",
+          stagger: 0.15,
+          onComplete: () => {
+            isAnimating = false;
+          }
+        });
+      }
+    });
+  }
+
   function nextSlide() {
-    currentIndex = (currentIndex + projectsPerPage) % projects.length;
+    animateSlide('next');
   }
 
   function previousSlide() {
-    currentIndex = (currentIndex - projectsPerPage + projects.length) % projects.length;
+    animateSlide('prev');
   }
 
-  // Auto-advance slides
   onMount(() => {
-    const interval = setInterval(nextSlide, 5000);
+    // Initial animation
+    gsap.from(projectsContainer.querySelectorAll('.project-item'), {
+      y: 50,
+      opacity: 0,
+      scale: 0.8,
+      duration: 0.8,
+      ease: "power3.out",
+      stagger: 0.15
+    });
+
+    const interval = setInterval(() => {
+      if (!isAnimating) {
+        nextSlide();
+      }
+    }, 5000);
+
     return () => clearInterval(interval);
   });
 </script>
@@ -78,7 +136,7 @@
       ←
     </button>
     
-    <div class="projects-grid">
+    <div class="projects-grid" bind:this={projectsContainer}>
       {#each visibleProjects as project (project.id)}
         <div class="project-item">
           <ProjectCard {project} />
@@ -129,6 +187,8 @@
     grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-lg);
     width: 100%;
+    overflow: hidden;
+    position: relative;
   }
 
   .nav-button {
