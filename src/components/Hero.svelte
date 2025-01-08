@@ -220,20 +220,22 @@
     text-align: center;
     max-width: 800px;
     padding: var(--spacing-xl);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   }
 
   h1 {
     font-size: clamp(2.5rem, 8vw, 4rem);
     font-weight: 700;
     margin-bottom: var(--spacing-md);
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--color-primary);
   }
 
   h2 {
     font-size: clamp(1.5rem, 4vw, 2rem);
-    color: var(--color-secondary);
+    color: var(--color-text);
     margin-bottom: var(--spacing-lg);
   }
 
