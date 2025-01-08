@@ -4,8 +4,8 @@
   export let name: string = "John Doe";
   export let title: string = "Full Stack Developer";
   export let description: string = "I create beautiful and functional web experiences";
-  export let speed: number = 0.001;
-  export let gridDensity: number = 50;
+  export let speed: number = 0.0003;
+  export let gridDensity: number = 80;
   export let lineColor: string = "rgba(0,0,0,0.3)";
   export let lineThickness: number = 1;
 
@@ -32,32 +32,36 @@
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const maxRadius = Math.max(rect.width, rect.height);
-    const baseRadius = 60;
-    const circleSpacing = 20;
-    const numCircles = 50;
+    const baseRadius = 40;
+    const numCircles = 80;
+    const maxLines = 36;
 
-    // Draw prominent center circle
+    // Draw dense center circle
     ctx.beginPath();
     ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.lineWidth = lineThickness * 1.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.lineWidth = lineThickness * 2;
     ctx.stroke();
 
-    // Draw flowing circles
+    // Draw flowing circles with progressive spacing
     for (let i = 0; i < numCircles; i++) {
       const progress = ((time + i * (1 / numCircles)) % 1);
-      const distance = progress * maxRadius;
-      const opacity = Math.max(0, 0.4 * (1 - progress));
-
-      // Draw circle
+      const easedProgress = Math.pow(progress, 1.5); // Non-linear spacing
+      const distance = easedProgress * maxRadius;
+      const opacity = Math.max(0, 0.5 * (1 - Math.pow(progress, 0.8)));
+      
+      // Calculate dynamic line density
+      const lineSpacing = Math.floor(maxLines * (1 - Math.pow(1 - progress, 2)));
+      const numLines = Math.max(12, maxLines - lineSpacing);
+      
+      // Draw circle with varying density
       ctx.beginPath();
       ctx.arc(centerX, centerY, baseRadius + distance, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
-      ctx.lineWidth = lineThickness;
+      ctx.lineWidth = lineThickness * (1 - progress * 0.3);
       ctx.stroke();
 
-      // Draw radial lines
-      const numLines = 24;
+      // Draw radial lines with progressive spacing
       for (let j = 0; j < numLines; j++) {
         const angle = (j / numLines) * Math.PI * 2;
         const radius = baseRadius + distance;
@@ -70,8 +74,8 @@
           centerY + Math.sin(angle) * baseRadius
         );
         ctx.lineTo(x1, y1);
-        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.3})`;
-        ctx.lineWidth = lineThickness * 0.5;
+        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.4})`;
+        ctx.lineWidth = lineThickness * (0.6 - progress * 0.3);
         ctx.stroke();
       }
     }
