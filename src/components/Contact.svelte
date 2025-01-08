@@ -24,6 +24,10 @@
   // References for animation
   let form: HTMLFormElement;
   let successMessage: HTMLDivElement;
+  let nameInput: HTMLInputElement;
+  let emailInput: HTMLInputElement;
+  let messageInput: HTMLTextAreaElement;
+  let submitButton: HTMLButtonElement;
 
   onMount(() => {
     gsap.from(form, {
@@ -31,6 +35,13 @@
       opacity: 0,
       duration: 0.8,
       ease: "power3.out"
+    });
+    gsap.from('.form-elements', {
+      y: 30,
+      opacity: 0,
+      stagger: 0.2,
+      duration: 0.8,
+      ease: 'power2.out'
     });
   });
 
@@ -76,7 +87,7 @@
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       formState.isSubmitted = true;
       formData = { name: '', email: '', message: '' };
 
@@ -94,6 +105,35 @@
       formState.isSubmitting = false;
     }
   }
+
+  // Basic animation functions -  Expand these for a complete implementation
+  function animateLabel(input: HTMLInputElement) {
+    gsap.to(input.previousElementSibling, { y: -15, opacity: 1, duration: 0.3 });
+  }
+
+  function resetLabel(input: HTMLInputElement) {
+    if (!input.value) {
+      gsap.to(input.previousElementSibling, { y: 0, opacity: 0.7, duration: 0.3 });
+    }
+  }
+
+  function highlightInput(input: HTMLInputElement) {
+    gsap.to(input, { backgroundColor: "#e0f2fe", duration: 0.3 });
+  }
+
+  function unhighlightInput(input: HTMLInputElement) {
+    gsap.to(input, { backgroundColor: "white", duration: 0.3 });
+  }
+
+  function animateButton(button: HTMLButtonElement) {
+    gsap.to(button, { scale: 1.05, backgroundColor: "#1677b9", duration: 0.3 });
+  }
+
+  function resetButton(button: HTMLButtonElement){
+    gsap.to(button, { scale: 1, backgroundColor: "#1e87cd", duration: 0.3 });
+  }
+
+
 </script>
 
 <section class="contact-section">
@@ -122,6 +162,7 @@
       bind:this={form}
       on:submit|preventDefault={handleSubmit}
       class:submitting={formState.isSubmitting}
+      class="form-elements"
     >
       <div class="form-group">
         <label for="name">Name</label>
@@ -133,6 +174,11 @@
           disabled={formState.isSubmitting}
           aria-invalid={errors.name ? 'true' : 'false'}
           aria-describedby={errors.name ? 'name-error' : undefined}
+          on:focus={(e) => animateLabel(e.target)}
+          on:blur={(e) => resetLabel(e.target)}
+          bind:this={nameInput}
+          on:focus={() => highlightInput(nameInput)}
+          on:blur={() => unhighlightInput(nameInput)}
         />
         {#if errors.name}
           <span class="error-message" id="name-error" transition:fade>
@@ -151,6 +197,11 @@
           disabled={formState.isSubmitting}
           aria-invalid={errors.email ? 'true' : 'false'}
           aria-describedby={errors.email ? 'email-error' : undefined}
+          on:focus={(e) => animateLabel(e.target)}
+          on:blur={(e) => resetLabel(e.target)}
+          bind:this={emailInput}
+          on:focus={() => highlightInput(emailInput)}
+          on:blur={() => unhighlightInput(emailInput)}
         />
         {#if errors.email}
           <span class="error-message" id="email-error" transition:fade>
@@ -169,6 +220,11 @@
           rows="5"
           aria-invalid={errors.message ? 'true' : 'false'}
           aria-describedby={errors.message ? 'message-error' : undefined}
+          on:focus={(e) => animateLabel(e.target)}
+          on:blur={(e) => resetLabel(e.target)}
+          bind:this={messageInput}
+          on:focus={() => highlightInput(messageInput)}
+          on:blur={() => unhighlightInput(messageInput)}
         ></textarea>
         {#if errors.message}
           <span class="error-message" id="message-error" transition:fade>
@@ -187,6 +243,9 @@
         type="submit" 
         class="submit-btn"
         disabled={formState.isSubmitting}
+        bind:this={submitButton}
+        on:mouseover={() => animateButton(submitButton)}
+        on:mouseout={() => resetButton(submitButton)}
       >
         {#if formState.isSubmitting}
           <span class="spinner"></span>
@@ -222,6 +281,8 @@
     margin-bottom: var(--spacing-xs);
     color: var(--color-text);
     font-weight: 500;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
   }
 
   input, textarea {
@@ -341,4 +402,4 @@
       font-size: 2rem;
     }
   }
-</style> 
+</style>
