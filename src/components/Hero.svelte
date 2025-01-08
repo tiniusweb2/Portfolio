@@ -1,141 +1,94 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import gsap from 'gsap';
-  import * as THREE from 'three';
+  // Props
+  export let name: string = "John Doe";
+  export let title: string = "Full Stack Developer";
+  export let description: string = "I create beautiful and functional web experiences";
 
   let canvas: HTMLCanvasElement;
-  let scene: THREE.Scene;
-  let camera: THREE.PerspectiveCamera;
-  let renderer: THREE.WebGLRenderer;
-  let particles: THREE.Points;
+  let ctx: CanvasRenderingContext2D;
+  let animationFrame: number;
+  let time = 0;
 
-  // Types for the component props
-  interface HeroProps {
-    name: string;
-    title: string;
-    description: string;
+  function setupCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx = canvas.getContext('2d')!;
+    ctx.scale(dpr, dpr);
   }
 
-  // Component props with defaults
-  export let name: HeroProps['name'] = "John Doe";
-  export let title: HeroProps['title'] = "Full Stack Developer";
-  export let description: HeroProps['description'] = "I create beautiful and functional web experiences";
+  function drawTunnel() {
+    if (!ctx) return;
 
-  // Animation timeline
-  let tl: gsap.core.Timeline;
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
 
-  onMount(() => {
-    // Initialize Three.js
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 10;
+    // Draw static center circle
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // Create particles
-    const geometry = new THREE.BufferGeometry();
-    const count = 5000;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
-      colors[i * 3] = Math.random();
-      colors[i * 3 + 1] = Math.random();
-      colors[i * 3 + 2] = Math.random();
+    // Draw radial lines
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(
+        centerX + Math.cos(angle) * 40,
+        centerY + Math.sin(angle) * 40
+      );
+      ctx.lineTo(
+        centerX + Math.cos(angle) * rect.width,
+        centerY + Math.sin(angle) * rect.width
+      );
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
     }
 
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    // Draw expanding circles
+    for (let i = 0; i < 20; i++) {
+      const radius = ((time + i * 20) % (rect.width / 2)) + 40;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
 
-    const material = new THREE.PointsMaterial({
-      size: 0.1,
-      sizeAttenuation: true,
-      color: 0xffffff,
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-    });
+    time += 0.002;
+    animationFrame = requestAnimationFrame(drawTunnel);
+  }
 
-    particles = new THREE.Points(geometry, material);
-    scene.add(particles);
+  function handleResize() {
+    if (canvas && ctx) {
+      setupCanvas();
+    }
+  }
 
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      
-      particles.geometry.attributes.position.array.forEach((value, index, array) => {
-        if (index % 3 === 2) {
-          array[index] -= 0.01;
-          if (array[index] < -10) array[index] = 10;
-        }
-      });
-      particles.geometry.attributes.position.needsUpdate = true;
-      
-      camera.position.z -= 0.005;
-      if (camera.position.z < -10) camera.position.z = 10;
+  import { onMount, onDestroy } from 'svelte';
 
-      renderer.render(scene, camera);
-    };
+  onMount(() => {
+    setupCanvas();
+    drawTunnel();
+    window.addEventListener('resize', handleResize);
+  });
 
-    animate();
-
-    // Initialize GSAP timeline
-    tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-    // Animate geometric shapes
-    tl.from(".geometric-shape", {
-      scale: 0,
-      rotation: -45,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.2
-    })
-    .from(".hero-content > *", {
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2
-    }, "-=0.5");
-
-    // Animate floating shapes
-    gsap.to(".floating", {
-      y: "random(-20, 20)",
-      x: "random(-20, 20)",
-      rotation: "random(-15, 15)",
-      duration: "random(2, 4)",
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      stagger: {
-        amount: 2,
-        from: "random"
-      }
-    });
+  onDestroy(() => {
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+    }
+    window.removeEventListener('resize', handleResize);
   });
 </script>
 
 <section class="hero">
-  <canvas bind:this={canvas} class="particle-tunnel"></canvas>
-  <div class="geometric-background">
-    <!-- Geometric shapes -->
-    <svg class="geometric-shape floating" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="40" class="shape-primary" />
-    </svg>
-    <svg class="geometric-shape floating" viewBox="0 0 100 100">
-      <rect x="20" y="20" width="60" height="60" class="shape-secondary" />
-    </svg>
-    <svg class="geometric-shape floating" viewBox="0 0 100 100">
-      <polygon points="50,20 80,80 20,80" class="shape-accent" />
-    </svg>
-    <!-- Add more shapes as needed -->
-  </div>
-
+  <canvas bind:this={canvas} class="tunnel-animation"></canvas>
   <div class="hero-content">
     <h1>{name}</h1>
     <h2>{title}</h2>
@@ -148,15 +101,6 @@
 </section>
 
 <style>
-  .particle-tunnel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-  }
-
   .hero {
     position: relative;
     min-height: 100vh;
@@ -164,54 +108,17 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: var(--color-background);
+    background: white;
     padding: var(--spacing-xl) var(--spacing-md);
   }
 
-  .geometric-background {
+  .tunnel-animation {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .geometric-shape {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-  }
-
-  .geometric-shape:nth-child(1) {
-    top: 10%;
-    left: 10%;
-  }
-
-  .geometric-shape:nth-child(2) {
-    top: 60%;
-    right: 15%;
-  }
-
-  .geometric-shape:nth-child(3) {
-    bottom: 20%;
-    left: 20%;
-  }
-
-  .shape-primary {
-    fill: var(--color-primary);
-    opacity: 0.1;
-  }
-
-  .shape-secondary {
-    fill: var(--color-secondary);
-    opacity: 0.1;
-  }
-
-  .shape-accent {
-    fill: var(--color-accent);
-    opacity: 0.1;
+    z-index: 0;
   }
 
   .hero-content {
@@ -280,11 +187,6 @@
   }
 
   @media (max-width: 768px) {
-    .geometric-shape {
-      width: 150px;
-      height: 150px;
-    }
-
     .hero-content {
       padding: var(--spacing-lg);
     }
@@ -294,4 +196,4 @@
       gap: var(--spacing-sm);
     }
   }
-</style> 
+</style>
