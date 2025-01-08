@@ -4,8 +4,8 @@
   export let name: string = "John Doe";
   export let title: string = "Full Stack Developer";
   export let description: string = "I create beautiful and functional web experiences";
-  export let speed: number = 0.002;
-  export let gridDensity: number = 30;
+  export let speed: number = 0.001;
+  export let gridDensity: number = 50;
   export let lineColor: string = "rgba(0,0,0,0.3)";
   export let lineThickness: number = 1;
 
@@ -32,34 +32,46 @@
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const maxRadius = Math.max(rect.width, rect.height);
-    const perspectiveIntensity = 0.8;
+    const baseRadius = 60;
+    const circleSpacing = 20;
+    const numCircles = 50;
 
-    // Draw expanding circles
-    for (let i = 0; i < gridDensity; i++) {
-      const progress = ((time + i * 0.1) % 1);
-      const scale = Math.exp(progress * perspectiveIntensity * 3);
+    // Draw prominent center circle
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = lineThickness * 1.5;
+    ctx.stroke();
+
+    // Draw flowing circles
+    for (let i = 0; i < numCircles; i++) {
+      const progress = ((time + i * (1 / numCircles)) % 1);
+      const distance = progress * maxRadius;
       const opacity = Math.max(0, 0.4 * (1 - progress));
-      const radius = scale * 40;
 
       // Draw circle
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, baseRadius + distance, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
       ctx.lineWidth = lineThickness;
       ctx.stroke();
 
-      // Draw grid lines
-      const numLines = 16;
+      // Draw radial lines
+      const numLines = 24;
       for (let j = 0; j < numLines; j++) {
         const angle = (j / numLines) * Math.PI * 2;
+        const radius = baseRadius + distance;
         const x1 = centerX + Math.cos(angle) * radius;
         const y1 = centerY + Math.sin(angle) * radius;
         
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
+        ctx.moveTo(
+          centerX + Math.cos(angle) * baseRadius,
+          centerY + Math.sin(angle) * baseRadius
+        );
         ctx.lineTo(x1, y1);
-        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.5})`;
-        ctx.lineWidth = lineThickness * 0.75;
+        ctx.strokeStyle = `rgba(0,0,0,${opacity * 0.3})`;
+        ctx.lineWidth = lineThickness * 0.5;
         ctx.stroke();
       }
     }
