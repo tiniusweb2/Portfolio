@@ -26,42 +26,59 @@
 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
+    const maxRadius = Math.max(rect.width, rect.height);
 
-    // Draw static center circle
+    // Draw static center circle with soft glow
     ctx.beginPath();
     ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw radial lines
+    // Draw radial lines with fade out effect
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
+      const gradient = ctx.createLinearGradient(
+        centerX + Math.cos(angle) * 40,
+        centerY + Math.sin(angle) * 40,
+        centerX + Math.cos(angle) * maxRadius,
+        centerY + Math.sin(angle) * maxRadius
+      );
+      
+      gradient.addColorStop(0, 'rgba(0,0,0,0.4)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      
       ctx.beginPath();
       ctx.moveTo(
         centerX + Math.cos(angle) * 40,
         centerY + Math.sin(angle) * 40
       );
       ctx.lineTo(
-        centerX + Math.cos(angle) * rect.width,
-        centerY + Math.sin(angle) * rect.width
+        centerX + Math.cos(angle) * maxRadius,
+        centerY + Math.sin(angle) * maxRadius
       );
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.strokeStyle = gradient;
       ctx.lineWidth = 2.5;
       ctx.stroke();
     }
 
-    // Draw expanding circles
-    for (let i = 0; i < 20; i++) {
-      const radius = ((time + i * 20) % (rect.width / 2)) + 40;
+    // Draw expanding circles with fade out
+    const numCircles = 20;
+    const spacing = 20;
+    
+    for (let i = 0; i < numCircles; i++) {
+      const progress = ((time + i * spacing) % maxRadius) / maxRadius;
+      const radius = 40 + progress * (maxRadius - 40);
+      const opacity = Math.max(0, 0.4 * (1 - progress));
+      
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
       ctx.lineWidth = 2;
       ctx.stroke();
     }
 
-    time += 0.002;
+    time += 0.5;
     animationFrame = requestAnimationFrame(drawTunnel);
   }
 
