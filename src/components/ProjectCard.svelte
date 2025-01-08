@@ -9,13 +9,40 @@
   let isExpanded = false;
   let card: HTMLElement;
 
+  let techBadges: HTMLElement;
+
   onMount(() => {
-    gsap.from(card, {
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out"
-    });
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Card entrance animation
+          gsap.from(card, {
+            opacity: 0,
+            y: 50,
+            scale: 0.95,
+            duration: 1,
+            ease: "power3.out",
+            onComplete: () => {
+              // Animate tech badges after card appears
+              gsap.from(techBadges.children, {
+                opacity: 0,
+                y: 20,
+                stagger: 0.1,
+                duration: 0.4,
+                ease: "power2.out"
+              });
+            }
+          });
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    observer.observe(card);
+
+    return () => {
+      observer.disconnect();
+    };
   });
 
   function toggleDescription() {
@@ -42,7 +69,7 @@
   <div class="content">
     <h3>{project.title}</h3>
     
-    <div class="tech-stack">
+    <div class="tech-stack" bind:this={techBadges}>
       {#each project.techStack as tech}
         <span class="tech-badge" style="--badge-color: {tech.color}">
           {tech.name}
