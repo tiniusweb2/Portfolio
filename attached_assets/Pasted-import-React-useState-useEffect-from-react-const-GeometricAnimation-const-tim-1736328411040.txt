@@ -1,0 +1,73 @@
+import React, { useState, useEffect } from 'react';
+
+const GeometricAnimation = () => {
+  const [time, setTime] = useState(0);
+  const [hoveredCell, setHoveredCell] = useState(null);
+  
+  // Animation loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(t => (t + 1) % 360);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate grid of hexagons
+  const generateCells = () => {
+    const cells = [];
+    const rows = 8;
+    const cols = 8;
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = col * 50 + (row % 2) * 25;
+        const y = row * 43;
+        
+        // Calculate animation offset based on position and time
+        const offset = Math.sin((time + x + y) * 0.05) * 20;
+        const hue = (time + x + y) % 360;
+        
+        // Calculate distance from hovered cell for ripple effect
+        let scale = 1;
+        if (hoveredCell) {
+          const dx = x - hoveredCell.x;
+          const dy = y - hoveredCell.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const ripple = Math.sin(time * 0.1 - distance * 0.1) * 0.2;
+          scale = 1 + Math.max(0, ripple * Math.exp(-distance * 0.01));
+        }
+
+        cells.push(
+          <g
+            key={`${row}-${col}`}
+            transform={`translate(${x},${y}) scale(${scale})`}
+            onMouseEnter={() => setHoveredCell({ x, y })}
+            className="transition-transform duration-300 ease-in-out"
+          >
+            <path
+              d="M25,0 L50,14.433756729740643 L50,43.30127018922193 L25,57.735026918962575 L0,43.30127018922193 L0,14.433756729740643 Z"
+              fill={`hsl(${hue}, 70%, ${50 + offset}%)`}
+              className="transition-all duration-300 ease-in-out hover:brightness-125"
+            />
+          </g>
+        );
+      }
+    }
+    return cells;
+  };
+
+  return (
+    <div className="w-full h-96 bg-gray-900 overflow-hidden rounded-lg">
+      <svg 
+        viewBox="0 0 450 400" 
+        className="w-full h-full"
+      >
+        <g transform="translate(25,25)">
+          {generateCells()}
+        </g>
+      </svg>
+    </div>
+  );
+};
+
+export default GeometricAnimation;

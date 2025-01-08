@@ -21,4 +21,4 @@ export default defineConfig({
       $types: path.resolve("./src/types"),
     },
   },
-});
+;
