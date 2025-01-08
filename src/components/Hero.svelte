@@ -1,6 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import gsap from 'gsap';
+  import * as THREE from 'three';
+
+  let canvas: HTMLCanvasElement;
+  let scene: THREE.Scene;
+  let camera: THREE.PerspectiveCamera;
+  let renderer: THREE.WebGLRenderer;
+  let particles: THREE.Points;
 
   // Types for the component props
   interface HeroProps {
@@ -18,6 +25,66 @@
   let tl: gsap.core.Timeline;
 
   onMount(() => {
+    // Initialize Three.js
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 10;
+
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Create particles
+    const geometry = new THREE.BufferGeometry();
+    const count = 5000;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      colors[i * 3] = Math.random();
+      colors[i * 3 + 1] = Math.random();
+      colors[i * 3 + 2] = Math.random();
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+      size: 0.1,
+      sizeAttenuation: true,
+      color: 0xffffff,
+      vertexColors: true,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+    });
+
+    particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      
+      particles.geometry.attributes.position.array.forEach((value, index, array) => {
+        if (index % 3 === 2) {
+          array[index] -= 0.01;
+          if (array[index] < -10) array[index] = 10;
+        }
+      });
+      particles.geometry.attributes.position.needsUpdate = true;
+      
+      camera.position.z -= 0.005;
+      if (camera.position.z < -10) camera.position.z = 10;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
     // Initialize GSAP timeline
     tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
@@ -54,6 +121,7 @@
 </script>
 
 <section class="hero">
+  <canvas bind:this={canvas} class="particle-tunnel"></canvas>
   <div class="geometric-background">
     <!-- Geometric shapes -->
     <svg class="geometric-shape floating" viewBox="0 0 100 100">
@@ -80,6 +148,15 @@
 </section>
 
 <style>
+  .particle-tunnel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
   .hero {
     position: relative;
     min-height: 100vh;
